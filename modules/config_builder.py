@@ -88,7 +88,7 @@ def build_configs(model_type, network_volume, work_dir, dataset_info, training_p
 
     # Build eval dataset TOML if eval data exists
     if dataset_info.get("has_eval"):
-        _build_eval_dataset_toml(eval_dataset_toml_path, dataset_info)
+        _build_eval_dataset_toml(eval_dataset_toml_path, dataset_info, training_params)
 
     return {
         "training_toml": training_toml_path,
@@ -159,10 +159,12 @@ def _build_dataset_toml(path, dataset_info, training_params, supports_video):
     logger.info(f"Dataset config written to {path}")
 
 
-def _build_eval_dataset_toml(path, dataset_info):
+def _build_eval_dataset_toml(path, dataset_info, training_params=None):
     """Build the eval_dataset.toml matching diffusion-pipe's expected format."""
+    training_params = training_params or {}
+    resolution = training_params.get("resolution", 1024)
     lines = []
-    lines.append("resolutions = [1024]")
+    lines.append(f"resolutions = [{resolution}]")
     lines.append("")
     lines.append("enable_ar_bucket = true")
     lines.append("min_ar = 0.5")

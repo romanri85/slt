@@ -38,7 +38,7 @@ BASE_MODEL_MAP = {
 }
 
 
-def upload_lora(checkpoint_dir, hf_output_repo, hf_token, model_type, training_params=None):
+def upload_lora(checkpoint_dir, hf_output_repo, hf_token, model_type, training_params=None, private=False):
     """
     Upload trained LoRA to HuggingFace Hub.
 
@@ -48,6 +48,7 @@ def upload_lora(checkpoint_dir, hf_output_repo, hf_token, model_type, training_p
         hf_token: HuggingFace token with write access
         model_type: Model type string (e.g. 'flux', 'sdxl')
         training_params: Optional dict of training params for model card
+        private: Whether to create the repo as private
 
     Returns:
         URL of the uploaded repo
@@ -56,7 +57,7 @@ def upload_lora(checkpoint_dir, hf_output_repo, hf_token, model_type, training_p
     api = HfApi(token=hf_token)
 
     logger.info(f"Creating/checking repo: {hf_output_repo}")
-    api.create_repo(repo_id=hf_output_repo, exist_ok=True, private=False)
+    api.create_repo(repo_id=hf_output_repo, exist_ok=True, private=private)
 
     # Generate model card
     model_card = MODEL_CARD_TEMPLATE.format(

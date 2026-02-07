@@ -71,6 +71,7 @@ def handler(job):
         trigger_word = job_input.get("trigger_word")
         gemini_api_key = job_input.get("gemini_api_key")
         training_params = job_input.get("training_params", {})
+        private_repo = job_input.get("private", False)
 
         # ── Phase 1: Validation (0%) ────────────────────────────
         yield {"progress": 0, "message": f"Validating job for model '{model_type}'..."}
@@ -94,10 +95,11 @@ def handler(job):
         # ── Phase 3: Dataset download (5-10%) ───────────────────
         yield {"progress": 5, "message": f"Downloading dataset from {hf_dataset_repo}..."}
         dataset_info = download_dataset(hf_dataset_repo, hf_token, work_dir)
+        img_count = dataset_info.get("image_count", 0)
+        vid_count = dataset_info.get("video_count", 0)
         yield {
             "progress": 10,
-            "message": f"Dataset ready: {dataset_info.get('has_images', False)} images, "
-                       f"{dataset_info.get('has_videos', False)} videos",
+            "message": f"Dataset ready: {img_count} images, {vid_count} videos",
         }
 
         # ── Phase 4: Captioning (10-25%) ────────────────────────
@@ -154,28 +156,39 @@ def handler(job):
 
         yield {"progress": 92, "message": f"Uploading LoRA to {hf_output_repo}..."}
 
+        # Merge actual total_epochs into training_params for model card
+        upload_params = dict(training_params)
+        if total_epochs and "epochs" not in upload_params:
+            upload_params["epochs"] = total_epochs
+
         repo_url = upload_lora(
             checkpoint_dir=checkpoint_dir,
             hf_output_repo=hf_output_repo,
             hf_token=hf_token,
             model_type=model_type,
-            training_params=training_params,
+            training_params=upload_params,
+            private=private_repo,
         )
 
-        yield {"progress": 100, "message": "Done!", "output": {"repo_url": repo_url}}
+        yield {
+            "progress": 100,
+            "message": "Done!",
+            "output": {"repo_url": repo_url},
+            "refresh_worker": True,
+        }
 
     except FileNotFoundError as e:
         logger.error(f"File error: {e}")
-        yield {"error": str(e)}
+        yield {"error": str(e), "refresh_worker": True}
     except ValueError as e:
         logger.error(f"Validation error: {e}")
-        yield {"error": str(e)}
+        yield {"error": str(e), "refresh_worker": True}
     except RuntimeError as e:
         logger.error(f"Runtime error: {e}")
-        yield {"error": str(e)}
+        yield {"error": str(e), "refresh_worker": True}
     except Exception as e:
         logger.error(f"Unexpected error: {traceback.format_exc()}")
-        yield {"error": f"Unexpected error: {str(e)}"}
+        yield {"error": f"Unexpected error: {str(e)}", "refresh_worker": True}
     finally:
         _active_trainer = None
         # Clean up work directory

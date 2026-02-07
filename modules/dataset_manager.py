@@ -78,6 +78,8 @@ def download_dataset(hf_dataset_repo, hf_token, work_dir):
         "has_images": img_count > 0,
         "has_videos": vid_count > 0,
         "has_eval": eval_count > 0,
+        "image_count": img_count,
+        "video_count": vid_count,
     }
 
 

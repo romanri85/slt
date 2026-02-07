@@ -32,7 +32,7 @@ RUN grep -v -i "flash-attn\|flash-attention" /diffusion_pipe/requirements.txt > 
     pip install -r /tmp/requirements_no_flash.txt
 
 # Pre-install flash-attn wheel for H100 (sm_90) — most common RunPod GPU
-RUN pip install https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.5.4/flash_attn-2.8.3+cu128torch2.9-cp312-cp312-linux_x86_64.whl || true
+RUN pip install https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.7.16/flash_attn-2.8.3+cu128torch2.10-cp312-cp312-linux_x86_64.whl || true
 
 # Upgrade key packages
 RUN pip install transformers -U && \
